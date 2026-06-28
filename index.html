@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>精準防縮放 · 進階互動版</title>
+  <style>
+    /* === CSS: touch-action 保留滾動與雙擊，停用雙指捏合 === */
+    html, body {
+      touch-action: manipulation;
+      margin: 0;
+      min-height: 100vh;
+      background: #f5f7fa;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 0;
+    }
+
+    .demo-card {
+      max-width: 640px;
+      width: 92%;
+      padding: 2rem 1.5rem;
+      background: white;
+      border-radius: 36px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.06);
+      text-align: center;
+      transition: 0.2s;
+      margin: 0.5rem 0;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 1.9rem;
+      letter-spacing: -0.01em;
+      color: #0b1b2f;
+      margin-top: 0.2rem;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #eef2f6;
+      padding: 0.25rem 1.2rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1f3a5f;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      color: #1f3a5f;
+      line-height: 1.6;
+      margin: 0.8rem 0;
+    }
+
+    .scroll-area {
+      background: #f0f4fe;
+      border-radius: 20px;
+      padding: 1rem 1.2rem;
+      max-height: 170px;
+      overflow-y: auto;
+      text-align: left;
+      font-size: 0.95rem;
+      border: 1px solid #dce3ec;
+      margin: 1rem 0 0.8rem 0;
+      scroll-behavior: smooth;
+      transition: background 0.15s;
+    }
+
+    .scroll-area p {
+      margin: 0.6rem 0;
+      color: #1a2c44;
+    }
+
+    .scroll-area p:last-child {
+      margin-bottom: 0;
+    }
+
+    .footer-note {
+      font-size: 0.8rem;
+      color: #4d627c;
+      background: #e8edf5;
+      padding: 0.4rem 1.2rem;
+      border-radius: 60px;
+      display: inline-block;
+      margin-top: 0.8rem;
+    }
+
+    .icon-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem 1rem;
+      margin: 0.6rem 0 0.8rem 0;
+    }
+
+    .icon-row span {
+      background: #eef2f6;
+      padding: 0.2rem 1rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 450;
+      color: #1f3a5f;
+    }
+
+    hr {
+      border: none;
+      border-top: 2px dashed #d0d9e6;
+      margin: 1.2rem 0;
+    }
+
+    .double-tap-hint {
+      background: #d9e3f0;
+      border-radius: 40px;
+      padding: 0.15rem 1.2rem;
+      font-size: 0.8rem;
+      color: #1a2c44;
+      display: inline-block;
+    }
+
+    /* ===== 新增: 互動回饋區 ===== */
+    .feedback-area {
+      background: #f2f6fc;
+      border-radius: 20px;
+      padding: 0.8rem 1rem;
+      margin: 1rem 0 0.6rem 0;
+      border-left: 4px solid #3a6b9b;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .feedback-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      background: white;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .feedback-badge .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 10px;
+      display: inline-block;
+      background: #34a853;
+    }
+
+    .feedback-badge .dot.warning {
+      background: #f9ab00;
+    }
+
+    .counter-box {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: white;
+      padding: 0.2rem 1rem 0.2rem 1.2rem;
+      border-radius: 40px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .counter-box button {
+      background: #eef2f6;
+      border: none;
+      font-size: 1.2rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #1f3a5f;
+      transition: 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .counter-box button:active {
+      background: #d0d9e6;
+      transform: scale(0.94);
+    }
+
+    .counter-box span {
+      font-weight: 600;
+      font-size: 1.1rem;
+      min-width: 1.8rem;
+      color: #0b1b2f;
+    }
+
+    .click-feedback {
+      font-size: 0.85rem;
+      background: #eef2f6;
+      padding: 0.15rem 0.8rem;
+      border-radius: 40px;
+      color: #1f3a5f;
+      transition: 0.1s;
+    }
+
+    .click-feedback:active {
+      background: #d0d9e6;
+    }
+
+    /* 新增: 狀態列 */
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.4rem 1rem;
+      background: #eaf0f8;
+      padding: 0.4rem 1.2rem;
+      border-radius: 60px;
+      font-size: 0.75rem;
+      color: #1f3a5f;
+      margin-top: 0.4rem;
+    }
+
+    .status-bar span {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    /* 響應式 */
+    @media (max-width: 480px) {
+      .demo-card { padding: 1.5rem 1rem; }
+      h1 { font-size: 1.6rem; }
+      .feedback-area { flex-direction: column; align-items: stretch; }
+      .counter-box { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="demo-card">
+    <h1>
+      🛡️ 防縮放 · 進階版
+      <span style="font-size: 1rem; background: #d9e3f0; padding: 0.1rem 1rem; border-radius: 40px; font-weight: 400;">+ 互動回饋</span>
+    </h1>
+    <div class="badge">保留單指滾動 · 雙擊正常 · 雙指/Ctrl+滾輪封鎖</div>
+
+    <div class="icon-row">
+      <span>⬆️ 單指滾動</span>
+      <span>👆 雙擊正常</span>
+      <span>🚫 雙指捏合已封鎖</span>
+      <span>🖥️ Ctrl+滾輪封鎖</span>
+    </div>
+
+    <!-- 可滾動區域 -->
+    <div class="scroll-area" id="scrollTest">
+      <p><strong>📜 滾動測試區</strong> (單指滑動可滾動)</p>
+      <p>第一行 — 這是一個可以上下滾動的區塊。</p>
+      <p>第二行 — 試試用兩指捏合縮放，應該完全無效。</p>
+      <p>第三行 — 但單指滾動依然順暢，雙擊也正常。</p>
+      <p>第四行 — 如果您在 Mac 觸控板上用雙指捏合，同樣被攔截。</p>
+      <p>第五行 — 若使用 Ctrl + 滾輪 (縮放)，也會被阻擋。</p>
+      <p style="color:#1f3a5f; background: #dce5f2; padding: 0.2rem 0.6rem; border-radius: 12px; display: inline-block;">✅ 縮放已被精準禁止</p>
+    </div>
+
+    <!-- ===== 新增: 互動回饋區塊 ===== -->
+    <div class="feedback-area">
+      <div class="feedback-badge">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">系統就緒</span>
+      </div>
+
+      <div class="counter-box">
+        <button id="decrementBtn" aria-label="減少">−</button>
+        <span id="counterDisplay">0</span>
+        <button id="incrementBtn" aria-label="增加">+</button>
+      </div>
+
+      <div class="click-feedback" id="clickFeedback">👆 點擊測試</div>
+    </div>
+
+    <!-- 狀態列: 顯示最近互動 -->
+    <div class="status-bar" id="statusBar">
+      <span>🟢 單指滾動: <strong id="scrollStatus">允許</strong></span>
+      <span>🔵 雙擊: <strong id="doubleTapStatus">允許</strong></span>
+      <span>⛔ 縮放: <strong id="zoomStatus">封鎖</strong></span>
+    </div>
+
+    <div style="display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; margin: 0.8rem 0 0.2rem;">
+      <span class="double-tap-hint">👆 雙擊我 (無縮放)</span>
+      <span class="double-tap-hint">👆 雙擊也沒縮放</span>
+    </div>
+
+    <hr>
+
+    <div style="font-size: 0.85rem; color: #2c405c; background: #f2f6fc; padding: 0.4rem 1rem; border-radius: 20px;">
+      <span>⚡ 計數器與狀態列即時反應您的點擊與滾動</span>
+    </div>
+
+    <div class="footer-note">
+      🧩 touch-action: manipulation + JS 雙重防護 · 新增視覺回饋
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // --------------------------------------------------------------
+      // 核心防縮放 (保持不變)
+      // --------------------------------------------------------------
+      document.addEventListener('touchstart', function (event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      document.addEventListener('wheel', function (event) {
+        if (event.ctrlKey) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.ctrlKey && (event.key === '+' || event.key === '-' || event.key === '0')) {
+          event.preventDefault();
+        }
+      });
+
+      // --------------------------------------------------------------
+      // 新增: 互動回饋功能
+      // --------------------------------------------------------------
+
+      // 1. 計數器
+      let counter = 0;
+      const counterDisplay = document.getElementById('counterDisplay');
+      const incrementBtn = document.getElementById('incrementBtn');
+      const decrementBtn = document.getElementById('decrementBtn');
+      const statusText = document.getElementById('statusText');
+      const statusDot = document.getElementById('statusDot');
+
+      function updateCounterUI() {
+        counterDisplay.textContent = counter;
+        // 改變狀態提示
+        if (counter > 5) {
+          statusText.textContent = '🔥 計數器高漲';
+          statusDot.className = 'dot warning';
+        } else if (counter < -3) {
+          statusText.textContent = '❄️ 負數中';
+          statusDot.className = 'dot warning';
+        } else {
+          statusText.textContent = '✅ 正常運作';
+          statusDot.className = 'dot';
+        }
+      }
+
+      incrementBtn.addEventListener('click', function(e) {
+        counter += 1;
+        updateCounterUI();
+        // 觸發視覺回饋
+        incrementBtn.style.transform = 'scale(0.92)';
+        setTimeout(() => { incrementBtn.style.transform = ''; }, 120);
+      });
+
+      decrementBtn.addEventListener('click', function(e) {
+        counter -= 1;
+        updateCounterUI();
+        decrementBtn.style.transform = 'scale(0.92)';
+        setTimeout(() => { decrementBtn.style.transform = ''; }, 120);
+      });
+
+      // 2. 點擊測試反饋
+      const clickFeedback = document.getElementById('clickFeedback');
+      clickFeedback.addEventListener('click', function(e) {
+        this.textContent = '✅ 點擊有效!';
+        this.style.background = '#d4e2f5';
+        setTimeout(() => {
+          this.textContent = '👆 點擊測試';
+          this.style.background = '';
+        }, 400);
+        // 同時更新狀態列（模擬）
+        const scrollStatus = document.getElementById('scrollStatus');
+        scrollStatus.textContent = '允許 (單指)';
+        setTimeout(() => { scrollStatus.textContent = '允許'; }, 600);
+      });
+
+      // 3. 雙擊模擬偵測 (僅視覺，不影響功能)
+      const doubleTapHints = document.querySelectorAll('.double-tap-hint');
+      doubleTapHints.forEach(el => {
+        el.addEventListener('dblclick', function(e) {
+          this.style.background = '#b8cce0';
+          this.textContent = '✅ 雙擊觸發 (無縮放)';
+          const doubleTapStatus = document.getElementById('doubleTapStatus');
+          doubleTapStatus.textContent = '觸發 (無縮放)';
+          setTimeout(() => {
+            this.style.background = '#d9e3f0';
+            this.textContent = '👆 雙擊我 (無縮放)';
+            doubleTapStatus.textContent = '允許';
+          }, 500);
+        });
+      });
+
+      // 4. 滾動區域監聽 (顯示滾動狀態)
+      const scrollArea = document.getElementById('scrollTest');
+      const scrollStatus = document.getElementById('scrollStatus');
+      scrollArea.addEventListener('scroll', function() {
+        scrollStatus.textContent = '滾動中';
+        // 輕微閃爍效果
+        this.style.background = '#e5edfa';
+        clearTimeout(this._scrollTimer);
+        this._scrollTimer = setTimeout(() => {
+          this.style.background = '#f0f4fe';
+          scrollStatus.textContent = '允許';
+        }, 300);
+      });
+
+      // 5. 額外: 觸控板/滑鼠滾動偵測 (僅視覺)
+      document.addEventListener('wheel', function(e) {
+        // 如果是一般滾動 (沒有 ctrlKey) 我們不攔截，但可以顯示狀態
+        if (!e.ctrlKey) {
+          const zoomStatus = document.getElementById('zoomStatus');
+          zoomStatus.textContent = '封鎖 (僅縮放)';
+          setTimeout(() => { zoomStatus.textContent = '封鎖'; }, 400);
+        }
+      }, { passive: true }); // passive: true 不影響 preventDefault
+
+      // 6. 初始狀態
+      updateCounterUI();
+
+      // 7. 觸控偵測 (顯示多指警告 - 視覺)
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) {
+          const zoomStatus = document.getElementById('zoomStatus');
+          zoomStatus.textContent = '⛔ 雙指攔截';
+          statusText.textContent = '⚠️ 雙指偵測 (已攔截)';
+          statusDot.className = 'dot warning';
+          setTimeout(() => {
+            zoomStatus.textContent = '封鎖';
+            if (counter <= 5 && counter >= -3) {
+              statusText.textContent = '✅ 正常運作';
+              statusDot.className = 'dot';
+            }
+          }, 500);
+        }
+      }, { passive: true }); // 不影響 preventDefault
+
+      console.log('✅ 防縮放 + 互動回饋已啟動');
+    })();
+  </script>
+
+  <noscript>
+    <div style="background:#ffe8d9; padding:0.5rem; text-align:center; border-radius:20px; margin:1rem;">
+      ⚠️ JavaScript 未啟用，但 CSS touch-action: manipulation 仍可防止雙指縮放。
+    </div>
+  </noscript>
+</body>
+</html>
